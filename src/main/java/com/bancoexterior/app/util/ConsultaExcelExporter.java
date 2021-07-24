@@ -1,6 +1,9 @@
 package com.bancoexterior.app.util;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.List;
  
 import javax.servlet.ServletOutputStream;
@@ -12,22 +15,30 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.bancoexterior.app.convenio.model.Movimiento;
 
 import lombok.extern.slf4j.Slf4j;
 
+
 @Slf4j
 public class ConsultaExcelExporter {
+	
+	public static final char COMA                                 = ',';
+	
+	public static final char PUNTO                                = '.';
+	
+	public static final String NUMEROFORMAT                       = "#,##0.00";
+	
 	private XSSFWorkbook workbook;
     private XSSFSheet sheet;
     private List<Movimiento> listaMovimientos;
+    
+    
      
     public ConsultaExcelExporter(List<Movimiento> listaMovimientos) {
-       log.info("me llamo");
-       log.info("listaMovimientos: "+listaMovimientos);
-    	this.listaMovimientos = listaMovimientos;
+       this.listaMovimientos = listaMovimientos;
         workbook = new XSSFWorkbook();
     }
  
@@ -95,20 +106,29 @@ public class ConsultaExcelExporter {
             createCell(row, columnCount++, movimiento.getNroIdCliente(), style);
             createCell(row, columnCount++, movimiento.getCuentaDivisa(), style);
             createCell(row, columnCount++, movimiento.getCuentaNacional(), style);
-            createCell(row, columnCount++, movimiento.getMontoDivisa().toString(), style);
-            createCell(row, columnCount++, movimiento.getMontoBsCliente().toString(), style);
-            createCell(row, columnCount++, movimiento.getTasaCliente().toString(), style);
-            createCell(row, columnCount++, movimiento.getTasaOperacion().toString(), style);
-            createCell(row, columnCount++, movimiento.getMontoBsOperacion().toString(), style);
+            log.info(formatNumber(movimiento.getMontoDivisa()));
+            createCell(row, columnCount++, formatNumber(movimiento.getMontoDivisa()), style);
+            
+            log.info(formatNumber(movimiento.getMontoBsCliente()));
+            createCell(row, columnCount++, formatNumber(movimiento.getMontoBsCliente()), style);
+            
+            log.info(formatNumber(movimiento.getTasaCliente())); 
+            createCell(row, columnCount++, formatNumber(movimiento.getTasaCliente()), style);
+            
+            log.info(formatNumber(movimiento.getTasaOperacion()));
+            createCell(row, columnCount++, formatNumber(movimiento.getTasaOperacion()), style);
+            
+            log.info(formatNumber(movimiento.getMontoBsOperacion()));
+            createCell(row, columnCount++, formatNumber(movimiento.getMontoBsOperacion()), style);
+            
+            
             createCell(row, columnCount++, movimiento.getReferenciaDebito(), style);
             createCell(row, columnCount++, movimiento.getReferenciaCredito(), style);
-            log.info("estatus: "+movimiento.getTipoTransaccion());
             if(movimiento.getTipoTransaccion().equals("C")) {
             	createCell(row, columnCount++, "Compra", style);
             }else {
             	createCell(row, columnCount++, "Venta", style);
             }
-            log.info("estatus: "+movimiento.getEstatus());
             if(movimiento.getEstatus() == 0) {
             	createCell(row, columnCount++, "Por Aprobar", style);
             }else {
@@ -132,6 +152,18 @@ public class ConsultaExcelExporter {
         }
     }
      
+    public  String formatNumber(BigDecimal numero) {
+		
+        DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols();
+        decimalFormatSymbols.setDecimalSeparator(COMA);
+        decimalFormatSymbols.setGroupingSeparator(PUNTO);
+        DecimalFormat df = new DecimalFormat(NUMEROFORMAT, decimalFormatSymbols);
+        
+         return df.format(numero);
+        
+    }
+    
+    
     public void export(HttpServletResponse response) throws IOException {
         writeHeaderLine();
         writeDataLines();

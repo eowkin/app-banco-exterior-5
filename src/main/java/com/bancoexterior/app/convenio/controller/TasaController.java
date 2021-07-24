@@ -33,6 +33,7 @@ import com.bancoexterior.app.convenio.model.Moneda;
 import com.bancoexterior.app.convenio.model.Tasa;
 import com.bancoexterior.app.convenio.service.IMonedaServiceApiRest;
 import com.bancoexterior.app.convenio.service.ITasaServiceApiRest;
+import com.bancoexterior.app.inicio.service.IAuditoriaService;
 import com.bancoexterior.app.util.LibreriaUtil;
 
 
@@ -50,6 +51,9 @@ public class TasaController {
 	
 	@Autowired
 	private IMonedaServiceApiRest monedaServiceApiRest;
+	
+	@Autowired
+	private IAuditoriaService auditoriaService;
 	
 	@Autowired
 	private LibreriaUtil libreriaUtil; 
@@ -104,6 +108,20 @@ public class TasaController {
 	
 	private static final String TASACONTROLLERSAVEF = "[==== FIN Save Tasa - Controller ====]";
 	
+	private static final String TASAFUNCIONAUDITORIAI = "[==== INICIO Guardar Auditoria  Tasa - Controller ====]";
+	
+	private static final String TASAFUNCIONAUDITORIAF = "[==== FIN Guardar Auditoria  Tasa - Controller ====]";
+	
+	private static final String TASAS = "Tasas";
+	
+	private static final String EDIT = "edit";
+	
+	private static final String GUARDAR = "guardar";
+	
+	private static final String SAVE = "save";
+	
+	private static final String MENSAJEOPERACIONEXITOSA = "Operacion Exitosa.";
+	
 	@GetMapping("/index")
 	public String index(Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
 		LOGGER.info(TASACONTROLLERINDEXI);
@@ -147,7 +165,7 @@ public class TasaController {
 	@GetMapping("/edit")
 	public String editarWsPrueba(@RequestParam("codMonedaOrigen") String codMonedaOrigen, 
 			@RequestParam("codMonedaDestino") String codMonedaDestino, @RequestParam("tipoOperacion") Integer tipoOperacion,
-			Tasa tasa, Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
+			Tasa tasa, Model model, RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(TASACONTROLLEREDITARI);
 		
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
@@ -170,14 +188,18 @@ public class TasaController {
 				tasaEdit.setMontoTasaVenta(tasaEdit.getMontoTasaVenta().setScale(2, RoundingMode.HALF_UP));
 				model.addAttribute("tasa", tasaEdit);
 				LOGGER.info(TASACONTROLLEREDITARF);
+				guardarAuditoriaTasa(EDIT, true, "0000", tasaBuscar, MENSAJEOPERACIONEXITOSA, request);
+				
             	return URLFORMTASAEDIT;
 			}else {
+				guardarAuditoriaTasa(EDIT, true, "0000", tasaBuscar, MENSAJECONSULTANOARROJORESULTADOS, request);
 				redirectAttributes.addFlashAttribute(MENSAJE, MENSAJECONSULTANOARROJORESULTADOS);
 				LOGGER.info(TASACONTROLLEREDITARF);
 				return REDIRECTINDEX;
 			}
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaTasa(EDIT, false, "0001", tasaBuscar, "Error: "+e.getMessage(), request);
 			redirectAttributes.addFlashAttribute(MENSAJEERROR, e.getMessage());
 			return REDIRECTINDEX;
 		}
@@ -188,7 +210,8 @@ public class TasaController {
 	
 	
 	@PostMapping("/guardar")
-	public String guardarWs(Tasa tasa, BindingResult result, Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
+	public String guardarWs(Tasa tasa, BindingResult result, Model model, RedirectAttributes redirectAttributes, 
+			HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(TASACONTROLLERGUARDARI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -221,11 +244,13 @@ public class TasaController {
 			
 			String respuesta = tasaServiceApiRest.actualizar(tasaRequest);
 			LOGGER.info(respuesta);
+			guardarAuditoriaTasa(GUARDAR, true, "0000", tasaEdit, respuesta, request);
 			redirectAttributes.addFlashAttribute(MENSAJE, respuesta);
 			LOGGER.info(TASACONTROLLERGUARDARF);
 			return REDIRECTINDEX;
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaTasa(GUARDAR, false, "0001", tasaEdit, e.getMessage(), request);
 			result.addError(new ObjectError(LISTAERROR, e.getMessage()));
 			listaError.add(e.getMessage());
 			model.addAttribute(LISTAERROR, listaError);
@@ -237,7 +262,8 @@ public class TasaController {
 	}
 	
 	@GetMapping("/formTasa")
-	public String formTasa(Tasa tasa, Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
+	public String formTasa(Tasa tasa, Model model, RedirectAttributes redirectAttributes, 
+			HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(TASACONTROLLERFORMI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -256,9 +282,11 @@ public class TasaController {
 			listaMonedas = monedaServiceApiRest.listaMonedas(monedasRequest);
 			model.addAttribute(LISTAMONEDAS, listaMonedas);
 			LOGGER.info(TASACONTROLLERFORMF);
+			guardarAuditoria("formTasa", true, "0000",  "Operacion Exitosa: formTasa", request);
 			return URLFORMTASA;
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoria("formTasa", false, "0001",  e.getMessage(), request);
 			redirectAttributes.addFlashAttribute(MENSAJEERROR, e.getMessage());
 			return REDIRECTINDEX;
 		}
@@ -268,7 +296,8 @@ public class TasaController {
 	}	
 	
 	@PostMapping("/save")
-	public String saveWs(Tasa tasa, BindingResult result, Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
+	public String saveWs(Tasa tasa, BindingResult result, Model model, RedirectAttributes redirectAttributes,
+			HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(TASACONTROLLERSAVEI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -306,11 +335,13 @@ public class TasaController {
 		try {
 			String respuesta = tasaServiceApiRest.crear(tasaRequest);
 			LOGGER.info(respuesta);
+			guardarAuditoriaTasa(SAVE, true, "0000", tasa, respuesta, request);
 			redirectAttributes.addFlashAttribute(MENSAJE, respuesta);
 			LOGGER.info(TASACONTROLLERSAVEF);
 			return REDIRECTINDEX;
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaTasa(SAVE, false, "0001", tasa, e.getMessage(), request);
 			try {
 				listaMonedas = monedaServiceApiRest.listaMonedas(monedasRequest);
 				model.addAttribute(LISTAMONEDAS, listaMonedas);
@@ -319,7 +350,7 @@ public class TasaController {
 				model.addAttribute(LISTAERROR, listaError);
 				return URLFORMTASA;
 			} catch (CustomException e1) {
-				LOGGER.error("error: "+e1);
+				LOGGER.error(e1);
 				result.addError(new ObjectError(LISTAERROR,e1.getMessage()));
 				listaError.add(e1.getMessage());
 				model.addAttribute(LISTAERROR, listaError);
@@ -361,7 +392,39 @@ public class TasaController {
 		model.addAttribute("arrUri", arrUriP);
 	}
 	
+	public void guardarAuditoria(String accion, boolean resultado, String codRespuesta,  String respuesta, HttpServletRequest request) {
+		try {
+			LOGGER.info(TASAFUNCIONAUDITORIAI);
+			auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+					TASAS, accion, codRespuesta, resultado, respuesta, request.getRemoteAddr());
+			LOGGER.info(TASAFUNCIONAUDITORIAF);
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+		}
+	}
 	
 	
+	public void guardarAuditoriaTasa(String accion, boolean resultado, String codRespuesta, Tasa tasa, String respuesta, HttpServletRequest request) {
+		try {
+			LOGGER.info(TASAFUNCIONAUDITORIAI);
+			
+			if(accion.equals(EDIT)) {
+				auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+						TASAS, accion, codRespuesta, resultado, respuesta+" Tasas:[codMonedaOrigen="+tasa.getCodMonedaOrigen()+"], "
+								+ "[codMonedaDestino="+tasa.getCodMonedaDestino()+"], [tipoOperacion="+tasa.getTipoOperacion()+"]", request.getRemoteAddr());
+			}else {
+				if(accion.equals(GUARDAR) || accion.equals(SAVE)) {
+					auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+							TASAS, accion, codRespuesta, resultado, respuesta+" Tasas:[codMonedaOrigen="+tasa.getCodMonedaOrigen()+"], "
+							+ "[codMonedaDestino="+tasa.getCodMonedaDestino()+"], [tipoOperacion="+tasa.getTipoOperacion()+"], "
+							+ "[montoTasaCompra="+tasa.getMontoTasaCompra()+"], [montoTasaVenta="+tasa.getMontoTasaVenta()+"]", request.getRemoteAddr());
+				}
+			}
+			
+			LOGGER.info(TASAFUNCIONAUDITORIAF);
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+		}
+	}
 	
 }

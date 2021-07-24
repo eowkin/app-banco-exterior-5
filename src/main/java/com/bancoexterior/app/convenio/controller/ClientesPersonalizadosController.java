@@ -193,6 +193,22 @@ public class ClientesPersonalizadosController {
 	
 	private static final String MENSAJEOPERACIONEXITOSA = "Operacion Exitosa.";
 	
+	private static final String SEARCHCREAR = "searchCrear";
+	
+	private static final String SEARCH = "search";
+	
+	private static final String SEARCHNROIDCLIENTE = "searchNroIdCliente";
+	
+	private static final String VERLIMITES = "verLimites";
+	
+	private static final String EDITLIMITECLIENTE = "editLimiteCliente";
+	
+	private static final String GUARDARLIMITECLIENTE = "guardarLimiteCliente";
+	
+	private static final String SAVELIMITECLIENTE = "saveLimiteCliente";
+	
+	private static final String FORMLIMITECLIENTEPERSONALIZADO = "formLimiteClientePersonalizado";
+	
 	
 	@GetMapping("/index/{page}")
 	public String index(@PathVariable("page") int page,Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
@@ -389,25 +405,28 @@ public class ClientesPersonalizadosController {
 						if(limitesPersonalizados.getFechaModificacion() != null) {
 							String[] arrOfStr = limitesPersonalizados.getFechaModificacion().split(" ", 2);
 							limitesPersonalizados.setFechaModificacion(arrOfStr[0]);
-							limitesPersonalizados.setMontoMinString(libreriaUtil.formatNumber(limitesPersonalizados.getMontoMin()));
-							limitesPersonalizados.setMontoMaxString(libreriaUtil.formatNumber(limitesPersonalizados.getMontoMax()));
-							limitesPersonalizados.setMontoTopeString(libreriaUtil.formatNumber(limitesPersonalizados.getMontoTope()));
-							limitesPersonalizados.setMontoMensualString(libreriaUtil.formatNumber(limitesPersonalizados.getMontoMensual()));
-							limitesPersonalizados.setMontoDiarioString(libreriaUtil.formatNumber(limitesPersonalizados.getMontoDiario()));
-							
 						}
+						LOGGER.info(limitesPersonalizados.getMontoMin());
+						limitesPersonalizados.setMontoMinString(libreriaUtil.formatNumber(limitesPersonalizados.getMontoMin()));
+						LOGGER.info(limitesPersonalizados.getMontoMax());
+						limitesPersonalizados.setMontoMaxString(libreriaUtil.formatNumber(limitesPersonalizados.getMontoMax()));
+						LOGGER.info(limitesPersonalizados.getMontoTope());
+						limitesPersonalizados.setMontoTopeString(libreriaUtil.formatNumber(limitesPersonalizados.getMontoTope()));
+						LOGGER.info(limitesPersonalizados.getMontoMensual());
+						limitesPersonalizados.setMontoMensualString(libreriaUtil.formatNumber(limitesPersonalizados.getMontoMensual()));
+						LOGGER.info(limitesPersonalizados.getMontoDiario());
+						limitesPersonalizados.setMontoDiarioString(libreriaUtil.formatNumber(limitesPersonalizados.getMontoDiario()));
 					}
 					
-					guardarAuditoriaCodigo("verLimites", true, "0000", codigoIbs, MENSAJEOPERACIONEXITOSA, request);
+					guardarAuditoriaCodigo(VERLIMITES, true, "0000", codigoIbs, MENSAJEOPERACIONEXITOSA, request);
 					model.addAttribute("listaLimitesPersonalizados", listaLimitesPersonalizados);
 					model.addAttribute("codigoIbs", codigoIbs);
 					LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERVERLIMITESF);
 		    		return URLINDEXLIMITESPERSONALIZADOS;
 				}else {
-					guardarAuditoriaCodigo("verLimites", true, "0000", codigoIbs, MENSAJENORESULTADO, request);
+					guardarAuditoriaCodigo(VERLIMITES, true, "0000", codigoIbs, MENSAJENORESULTADO, request);
 					model.addAttribute("listaLimitesPersonalizados", listaLimitesPersonalizados);
 					model.addAttribute("codigoIbs", codigoIbs);
-					//model.addAttribute(MENSAJEERROR, MENSAJENORESULTADO);
 					model.addAttribute(MENSAJE, MENSAJENORESULTADO);
 					LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERVERLIMITESF);
 					return URLINDEXLIMITESPERSONALIZADOS;
@@ -418,7 +437,7 @@ public class ClientesPersonalizadosController {
 			}		
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
-			guardarAuditoriaCodigo("verLimites", false, "0001", codigoIbs, ERROR+e.getMessage(), request);
+			guardarAuditoriaCodigo(VERLIMITES, false, "0001", codigoIbs, ERROR+e.getMessage(), request);
 			redirectAttributes.addFlashAttribute(MENSAJEERROR, e.getMessage());
 			return REDIRECTINDEX+1;
 		}
@@ -428,7 +447,7 @@ public class ClientesPersonalizadosController {
 	@GetMapping("/editLimiteCliente/{codigoIbs}/{codMoneda}/{tipoTransaccion}")
 	public String editarLimiteClienteWs(@PathVariable("codigoIbs") String codigoIbs, @PathVariable("codMoneda") String codMoneda, 
 			@PathVariable("tipoTransaccion") String tipoTransaccion,LimitesPersonalizados limitesPersonalizados,Model model, 
-			RedirectAttributes redirectAttributes, HttpSession httpSession) {
+			RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLEREDITARLIMITESI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -445,15 +464,18 @@ public class ClientesPersonalizadosController {
 		try {
 			limitesPersonalizadosEdit = limitesPersonalizadosServiceApiRest.buscarLimitesPersonalizados(limitesPersonalizadosRequest);
 			if(limitesPersonalizadosEdit != null) {
+				guardarAuditoriaEditLimites(EDITLIMITECLIENTE, true, "0000", limitesP, MENSAJEOPERACIONEXITOSA, request);
 				model.addAttribute("limitesPersonalizados", limitesPersonalizadosEdit);
 				LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLEREDITARLIMITESF);
 				return URLFORMLIMITEPERSONALIZADOEDIT;
 			}else {
+				guardarAuditoriaEditLimites(EDITLIMITECLIENTE, true, "0000", limitesP, MENSAJENORESULTADO, request);
 				redirectAttributes.addFlashAttribute(MENSAJEERROR, MENSAJENORESULTADO);
 				return REDIRECTINDEX+1;
 			}
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaEditLimites(EDITLIMITECLIENTE, false, "0001", limitesP, e.getMessage(), request);
 			redirectAttributes.addFlashAttribute(MENSAJEERROR, e.getMessage());
 			return REDIRECTINDEX+1;
 		}
@@ -464,7 +486,7 @@ public class ClientesPersonalizadosController {
 	
 	@PostMapping("/guardarLimiteCliente")
 	public String guardarLimiteClienteWs(LimitesPersonalizados limitesPersonalizados, BindingResult result,
-			RedirectAttributes redirectAttributes, Model model, HttpSession httpSession) {
+			RedirectAttributes redirectAttributes, Model model, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERGUARDARLIMITEI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -506,12 +528,14 @@ public class ClientesPersonalizadosController {
 		try {
 			
 			String respuesta = limitesPersonalizadosServiceApiRest.actualizar(limitesPersonalizadosRequest);
+			guardarAuditoriaEditLimites(GUARDARLIMITECLIENTE, true, "0000", limitesPersonalizados, respuesta, request);
 			LOGGER.info(respuesta);
 			redirectAttributes.addFlashAttribute(MENSAJE, respuesta);
 			LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERGUARDARLIMITEF);
 			return REDIRECTINDEXLIMITESPERSONALIZADOS+limitesPersonalizados.getCodigoIbs();
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaEditLimites(GUARDARLIMITECLIENTE, false, "0001", limitesPersonalizados, e.getMessage(), request);
 			result.addError(new ObjectError(LISTAERROR,e.getMessage()));
 			listaError.add(e.getMessage());
 			model.addAttribute(LISTAERROR, listaError);
@@ -525,7 +549,7 @@ public class ClientesPersonalizadosController {
 	
 	@GetMapping("/formLimiteClientePersonalizado/{codigoIbs}")
 	public String formLimiteClientePersonalizado(@PathVariable("codigoIbs") String codigoIbs,LimitesPersonalizados limitesPersonalizados,  
-			Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
+			Model model, RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		
 		LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERFORMLIMITEI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
@@ -551,17 +575,20 @@ public class ClientesPersonalizadosController {
 			
 			clientesPersonalizadosEdit = clientePersonalizadoServiceApiRest.buscarClientesPersonalizados(clienteRequest);
 			if(clientesPersonalizadosEdit != null) {
+				guardarAuditoriaCodigo(FORMLIMITECLIENTEPERSONALIZADO, true, "0000", codigoIbs, MENSAJEOPERACIONEXITOSA, request);
 				listaMonedas = monedaServiceApiRest.listaMonedas(monedasRequest);
 				limitesPersonalizados.setCodigoIbs(codigoIbs);
 				model.addAttribute(LISTAMONEDAS, listaMonedas);
 				LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERFORMLIMITEF);
 	    		return URLFORMLIMITEPERSONALIZADO;
 			}else {
+				guardarAuditoriaCodigo(FORMLIMITECLIENTEPERSONALIZADO, true, "0000", codigoIbs, MENSAJENORESULTADO, request);
 				redirectAttributes.addFlashAttribute(MENSAJEERROR, MENSAJENORESULTADO);
 				return REDIRECTINDEX+1;
 			}
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaCodigo(FORMLIMITECLIENTEPERSONALIZADO, false, "0001", codigoIbs, e.getMessage(), request);
 			redirectAttributes.addFlashAttribute(MENSAJEERROR, e.getMessage());
 			return REDIRECTINDEX+1;
 		}	
@@ -569,7 +596,7 @@ public class ClientesPersonalizadosController {
 	
 	@PostMapping("/saveLimiteCliente")
 	public String saveLimiteClienteWs(LimitesPersonalizados limitesPersonalizados, BindingResult result, Model model, 
-			RedirectAttributes redirectAttributes, HttpSession httpSession) {
+			RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERSAVELIMITEI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -630,11 +657,13 @@ public class ClientesPersonalizadosController {
 		
 			String respuesta = limitesPersonalizadosServiceApiRest.crear(limitesPersonalizadosRequest);
 			LOGGER.info(respuesta);
+			guardarAuditoriaEditLimites(SAVELIMITECLIENTE, true, "0000", limitesPersonalizados, respuesta, request);
 			redirectAttributes.addFlashAttribute(MENSAJE, respuesta);
 			LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERSAVELIMITEF);
 			return REDIRECTINDEXLIMITESPERSONALIZADOS+limitesPersonalizados.getCodigoIbs();
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaEditLimites(SAVELIMITECLIENTE, false, "0001", limitesPersonalizados, e.getMessage(), request);
 			try {
 				listaMonedas = monedaServiceApiRest.listaMonedas(monedasRequest);
 				model.addAttribute(LISTAMONEDAS, listaMonedas);
@@ -657,7 +686,7 @@ public class ClientesPersonalizadosController {
 	@GetMapping("/activarLimiteCliente/{codigoIbs}/{codMoneda}/{tipoTransaccion}")
 	public String activarLimiteClienteWs(@PathVariable("codigoIbs") String codigoIbs, @PathVariable("codMoneda") String codMoneda, 
 			@PathVariable("tipoTransaccion") String tipoTransaccion,LimitesPersonalizados limitesPersonalizados,
-			Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
+			Model model, RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERACTIVARLIMITEI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -678,11 +707,13 @@ public class ClientesPersonalizadosController {
 			limitesPersonalizadosRequest.setLimiteCliente(limitesPersonalizadosEdit);
 			String respuesta = limitesPersonalizadosServiceApiRest.actualizar(limitesPersonalizadosRequest);
 			LOGGER.info(respuesta);
+			guardarAuditoriaActivarDesactivarLimites("activarLimiteCliente", true, "0000", limitesP, respuesta, request);
 			redirectAttributes.addFlashAttribute(MENSAJE, respuesta);
 			LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERACTIVARLIMITEF);
 			return REDIRECTINDEXLIMITESPERSONALIZADOS+codigoIbs;
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaActivarDesactivarLimites("activarLimiteCliente", false, "0001", limitesP, e.getMessage(), request);
 			redirectAttributes.addFlashAttribute(MENSAJEERROR, e.getMessage());
 			return REDIRECTINDEXLIMITESPERSONALIZADOS+codigoIbs;
 		}
@@ -693,7 +724,7 @@ public class ClientesPersonalizadosController {
 	@GetMapping("/desactivarLimiteCliente/{codigoIbs}/{codMoneda}/{tipoTransaccion}")
 	public String desactivarLimiteClienteWs(@PathVariable("codigoIbs") String codigoIbs, @PathVariable("codMoneda") String codMoneda, 
 			@PathVariable("tipoTransaccion") String tipoTransaccion,LimitesPersonalizados limitesPersonalizados,
-			Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
+			Model model, RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERDESACTIVARLIMITEI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -718,11 +749,13 @@ public class ClientesPersonalizadosController {
 			limitesPersonalizadosRequest.setLimiteCliente(limitesPersonalizadosEdit);
 			String respuesta = limitesPersonalizadosServiceApiRest.actualizar(limitesPersonalizadosRequest);
 			LOGGER.info(respuesta);
+			guardarAuditoriaActivarDesactivarLimites("desactivarLimiteCliente", true, "0000", limitesP, respuesta, request);
 			redirectAttributes.addFlashAttribute(MENSAJE, respuesta);
 			LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERDESACTIVARLIMITEF);
 			return REDIRECTINDEXLIMITESPERSONALIZADOS+codigoIbs;
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaActivarDesactivarLimites("desactivarLimiteCliente", false, "0001", limitesP, e.getMessage(), request);
 			redirectAttributes.addFlashAttribute(MENSAJEERROR, e.getMessage());
 			return REDIRECTINDEXLIMITESPERSONALIZADOS+codigoIbs;
 		}
@@ -733,7 +766,7 @@ public class ClientesPersonalizadosController {
 	@GetMapping("/search")
 	public String search(
 			@ModelAttribute("clientesPersonalizadosSearch") ClientesPersonalizados clientesPersonalizadosSearch,
-			Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
+			Model model, RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERSEARCHI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -762,11 +795,12 @@ public class ClientesPersonalizadosController {
 							clientesPersonalizados2.setFechaModificacion(arrOfStr[0]);
 						}
 					}
+					guardarAuditoriaSearchClientePersonalizado(SEARCH, true, "0000",clientesPersonalizados, MENSAJEOPERACIONEXITOSA, request);
 					datosPaginacion = clienteResponse.getDatosPaginacion();
-					LOGGER.info("datosPaginacion: "+datosPaginacion);
 					model.addAttribute(LISTACLIENTESPERSONALIZADOS, listaClientesPersonalizados);
 					model.addAttribute(DATOSPAGINACION, datosPaginacion);
 				}else {
+					guardarAuditoriaSearchClientePersonalizado(SEARCH, true, "0000",clientesPersonalizados, MENSAJENORESULTADO, request);
 					datosPaginacion.setTotalPaginas(0);
 					model.addAttribute(LISTACLIENTESPERSONALIZADOS, listaClientesPersonalizados);
 					model.addAttribute(DATOSPAGINACION, datosPaginacion);
@@ -783,6 +817,7 @@ public class ClientesPersonalizadosController {
 			
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaSearchClientePersonalizado(SEARCH, false, "0001",clientesPersonalizados, e.getMessage(), request);
 			datosPaginacion.setTotalPaginas(0);
 			model.addAttribute(LISTACLIENTESPERSONALIZADOS, listaClientesPersonalizados);
 			model.addAttribute(DATOSPAGINACION, datosPaginacion);
@@ -796,7 +831,7 @@ public class ClientesPersonalizadosController {
 	@GetMapping("/searchNroIdCliente")
 	public String searchNroIdCliente(
 			@ModelAttribute("clientesPersonalizadosSearch") ClientesPersonalizados clientesPersonalizadosSearch,
-			Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
+			Model model, RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERSEARCHNROIDI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -827,11 +862,13 @@ public class ClientesPersonalizadosController {
 							clientesPersonalizados2.setFechaModificacion(arrOfStr[0]);
 						}
 					}
+					guardarAuditoriaSearchClientePersonalizado(SEARCHNROIDCLIENTE, true, "0000",clientesPersonalizados, MENSAJEOPERACIONEXITOSA, request);
 					datosPaginacion = clienteResponse.getDatosPaginacion();
 					model.addAttribute(LISTACLIENTESPERSONALIZADOS, listaClientesPersonalizados);
 					model.addAttribute(DATOSPAGINACION, datosPaginacion);
 					
 				}else {
+					guardarAuditoriaSearchClientePersonalizado(SEARCHNROIDCLIENTE, true, "0000",clientesPersonalizados, MENSAJENORESULTADO, request);
 					datosPaginacion.setTotalPaginas(0);
 					model.addAttribute(LISTACLIENTESPERSONALIZADOS, listaClientesPersonalizados);
 					model.addAttribute(DATOSPAGINACION, datosPaginacion);
@@ -853,6 +890,7 @@ public class ClientesPersonalizadosController {
 			
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaSearchClientePersonalizado(SEARCHNROIDCLIENTE, false, "0001",clientesPersonalizados, e.getMessage(), request);
 			datosPaginacion.setTotalPaginas(0);
 			model.addAttribute(LISTACLIENTESPERSONALIZADOS, listaClientesPersonalizados);
 			model.addAttribute(DATOSPAGINACION, datosPaginacion);
@@ -886,6 +924,7 @@ public class ClientesPersonalizadosController {
 			DatosClientes datosClientes = clientePersonalizadoServiceApiRest.buscarDatosBasicos(clienteDatosBasicoRequest);
 			
 			if(datosClientes != null) {
+				guardarAuditoriaClientePersonalizado(SEARCHCREAR, true, "0000", clientesPersonalizados, MENSAJEOPERACIONEXITOSA, request);
 				clientesPersonalizados.setCodigoIbs(datosClientes.getCodIbs());
 				clientesPersonalizados.setNroIdCliente(datosClientes.getNroIdCliente());
 				clientesPersonalizados.setNombreRif(datosClientes.getNombreLegal());
@@ -893,6 +932,7 @@ public class ClientesPersonalizadosController {
 				LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERSEARCHCREARF);
 				return URLFORMCLIENTESPERSONALIZADOS;
 			}else {
+				guardarAuditoriaClientePersonalizado(SEARCHCREAR, true, "0000", clientesPersonalizados, MENSAJENORESULTADO, request);
 				model.addAttribute(MENSAJEERROR, MENSAJENORESULTADO);
 				return URLFORMCLIENTESPERSONALIZADOSBUSCAR;
 			}
@@ -900,6 +940,7 @@ public class ClientesPersonalizadosController {
 			
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaClientePersonalizado(SEARCHCREAR, false, "0001", clientesPersonalizados, e.getMessage(), request);
 			model.addAttribute(MENSAJEERROR, e.getMessage());
 			return URLFORMCLIENTESPERSONALIZADOSBUSCAR;
 		}
@@ -933,7 +974,8 @@ public class ClientesPersonalizadosController {
 	
 	
 	@PostMapping("/save")
-	public String saveWs(ClientesPersonalizados clientesPersonalizados, Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
+	public String saveWs(ClientesPersonalizados clientesPersonalizados, Model model,
+			RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERSAVEI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -947,12 +989,14 @@ public class ClientesPersonalizadosController {
 		try {
 			String respuesta = clientePersonalizadoServiceApiRest.crear(clienteRequest);
 			LOGGER.info(respuesta);
+			guardarAuditoriaClientePersonalizado("save", true, "0000", clientesPersonalizados, respuesta, request);
 			redirectAttributes.addFlashAttribute(MENSAJE, MENSAJECREARCLIENTE);
 			LOGGER.info(CLIENTESPERSONALIZADOSCONTROLLERSAVEF);
 			return "redirect:/clientesPersonalizados/formLimiteClientePersonalizado/"+clientesPersonalizados.getCodigoIbs();
 			
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaClientePersonalizado("save", false, "0001", clientesPersonalizados, e.getMessage(), request);
 			model.addAttribute(MENSAJEERROR,e.getMessage());
 			return URLFORMCLIENTESPERSONALIZADOS;
 		}
@@ -1034,7 +1078,7 @@ public class ClientesPersonalizadosController {
 		
 		String[] arrUriP = new String[2]; 
 		arrUriP[0] = "Home";
-		arrUriP[1] = "clientesPersonalizados";
+		arrUriP[1] = CLIENTESPERSONALIZADOS;
 		model.addAttribute("arrUri", arrUriP);
 	}
 	
@@ -1060,6 +1104,27 @@ public class ClientesPersonalizadosController {
 		}
 	}
 	
+	
+	public void guardarAuditoriaClientePersonalizado(String accion, boolean resultado, String codRespuesta, ClientesPersonalizados clientesPersonalizados, String respuesta, HttpServletRequest request) {
+		try {
+			LOGGER.info(CLIENTESPERSONALIZADOSFUNCIONAUDITORIAI);
+			if(accion.equals(SEARCHCREAR)) {
+				auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+						CLIENTESPERSONALIZADOS, accion, codRespuesta, resultado, respuesta+" ClientesPersonalizados:[codigoIbs="+clientesPersonalizados.getCodigoIbs()+"], [nroIdCliente="+clientesPersonalizados.getNroIdCliente()+"]", request.getRemoteAddr());
+			}else {
+				if(accion.equals("save")) {
+					auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+						CLIENTESPERSONALIZADOS, accion, codRespuesta, resultado, respuesta+" ClientesPersonalizados:[codigoIbs="+clientesPersonalizados.getCodigoIbs()+"], [nroIdCliente="+clientesPersonalizados.getNroIdCliente()+"], [nombreRif="+clientesPersonalizados.getNombreRif()+"]", request.getRemoteAddr());
+				}	
+			}
+			
+			LOGGER.info(CLIENTESPERSONALIZADOSFUNCIONAUDITORIAF);
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+		}
+	}
+	
+	
 	public void guardarAuditoria(String accion, boolean resultado, String codRespuesta,  String respuesta, HttpServletRequest request) {
 		try {
 			LOGGER.info(CLIENTESPERSONALIZADOSFUNCIONAUDITORIAI);
@@ -1070,4 +1135,79 @@ public class ClientesPersonalizadosController {
 			LOGGER.error(e.getMessage());
 		}
 	}
+	
+	public void guardarAuditoriaEditLimites(String accion, boolean resultado, String codRespuesta, 
+			LimitesPersonalizados limitesP, String respuesta, HttpServletRequest request) {
+		try {
+			LOGGER.info(CLIENTESPERSONALIZADOSFUNCIONAUDITORIAI);
+			if(accion.equals(EDITLIMITECLIENTE)) {
+				auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+						CLIENTESPERSONALIZADOS, accion, codRespuesta, resultado, respuesta+" LimitesPersonalizados:[codigoIbs="+limitesP.getCodigoIbs()+"], [codMoneda="+limitesP.getCodMoneda()+"], [tipoTransaccion="+limitesP.getTipoTransaccion()+"]", request.getRemoteAddr());
+			}else {
+				if(accion.equals(GUARDARLIMITECLIENTE)) {
+					auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+							CLIENTESPERSONALIZADOS, accion, codRespuesta, resultado, respuesta+" LimitesPersonalizados:[codigoIbs="+limitesP.getCodigoIbs()+"], "
+							+ "[codMoneda="+limitesP.getCodMoneda()+"], [tipoTransaccion="+limitesP.getTipoTransaccion()+"], [montoMin="+limitesP.getMontoMin()+"], "
+							+ "[montoMax="+limitesP.getMontoMax()+"], [montoTope="+limitesP.getMontoTope()+"], [montoMensual="+limitesP.getMontoMensual()+"], "
+							+ "[montoDiario="+limitesP.getMontoDiario()+"]", request.getRemoteAddr());
+				}else {
+					if(accion.equals(SAVELIMITECLIENTE)) {
+						auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+								CLIENTESPERSONALIZADOS, accion, codRespuesta, resultado, respuesta+" LimitesPersonalizados:[codigoIbs="+limitesP.getCodigoIbs()+"], "
+								+ "[codMoneda="+limitesP.getCodMoneda()+"], [tipoTransaccion="+limitesP.getTipoTransaccion()+"], [montoMin="+limitesP.getMontoMin()+"], "
+								+ "[montoMax="+limitesP.getMontoMax()+"], [montoTope="+limitesP.getMontoTope()+"], [montoMensual="+limitesP.getMontoMensual()+"], "
+								+ "[montoDiario="+limitesP.getMontoDiario()+"]", request.getRemoteAddr());
+					}
+				}
+			}
+						
+			LOGGER.info(CLIENTESPERSONALIZADOSFUNCIONAUDITORIAF);
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+		}
+	}
+	
+	public void guardarAuditoriaActivarDesactivarLimites(String accion, boolean resultado, String codRespuesta, 
+			LimitesPersonalizados limitesP, String respuesta, HttpServletRequest request) {
+		try {
+			LOGGER.info(CLIENTESPERSONALIZADOSFUNCIONAUDITORIAI);
+				auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+						CLIENTESPERSONALIZADOS, accion, codRespuesta, resultado, respuesta+" LimitesPersonalizados:[codigoIbs="+limitesP.getCodigoIbs()+"], [codMoneda="+limitesP.getCodMoneda()+"], [tipoTransaccion="+limitesP.getTipoTransaccion()+"]", request.getRemoteAddr());
+			LOGGER.info(CLIENTESPERSONALIZADOSFUNCIONAUDITORIAF);
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+		}
+	}
+	
+	public void guardarAuditoriaSearchClientePersonalizado(String accion, boolean resultado, String codRespuesta, ClientesPersonalizados clientesPersonalizados, String respuesta, HttpServletRequest request) {
+		try {
+			LOGGER.info(CLIENTESPERSONALIZADOSFUNCIONAUDITORIAI);
+			if(accion.equals(SEARCH)) {
+				if(clientesPersonalizados.getCodigoIbs() != null) {
+					auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+							CLIENTESPERSONALIZADOS, accion, codRespuesta, resultado, respuesta+" ClientesPersonalizados:[codigoIbs="+clientesPersonalizados.getCodigoIbs()+"]", request.getRemoteAddr());
+				}else {
+					auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+							CLIENTESPERSONALIZADOS, accion, codRespuesta, resultado, respuesta+" ClientesPersonalizados:[codigoIbs=]", request.getRemoteAddr());
+				}
+				
+			}else {
+				if(accion.equals(SEARCHNROIDCLIENTE)) {
+					if(clientesPersonalizados.getNroIdCliente() != null) {
+						auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+								CLIENTESPERSONALIZADOS, accion, codRespuesta, resultado, respuesta+" ClientesPersonalizados: [nroIdCliente="+clientesPersonalizados.getNroIdCliente()+"]", request.getRemoteAddr());
+					}else {
+						auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+								CLIENTESPERSONALIZADOS, accion, codRespuesta, resultado, respuesta+" ClientesPersonalizados: [nroIdCliente=]", request.getRemoteAddr());
+					}
+					
+				}	
+			}
+			
+			LOGGER.info(CLIENTESPERSONALIZADOSFUNCIONAUDITORIAF);
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+		}
+	}
+	
 }

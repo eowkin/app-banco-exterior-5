@@ -31,6 +31,7 @@ import com.bancoexterior.app.convenio.model.LimitesGenerales;
 import com.bancoexterior.app.convenio.model.Moneda;
 import com.bancoexterior.app.convenio.service.ILimitesGeneralesServiceApirest;
 import com.bancoexterior.app.convenio.service.IMonedaServiceApiRest;
+import com.bancoexterior.app.inicio.service.IAuditoriaService;
 import com.bancoexterior.app.util.LibreriaUtil;
 
 
@@ -47,6 +48,9 @@ public class LimitesGeneralesController {
 	
 	@Autowired
 	private IMonedaServiceApiRest monedaServiceApiRest;
+	
+	@Autowired
+	private IAuditoriaService auditoriaService;
 	
 	@Autowired
 	private LibreriaUtil libreriaUtil; 
@@ -121,6 +125,23 @@ public class LimitesGeneralesController {
 	
 	private static final String LIMITESGENERALESCONTROLLERSEARCHF = "[==== FIN Search LimitesGenerales Consultas - Controller ====]";
 	
+	private static final String LIMITESGENERALESFUNCIONAUDITORIAI = "[==== INICIO Guardar Auditoria  LimitesGenerales - Controller ====]";
+	
+	private static final String LIMITESGENERALESFUNCIONAUDITORIAF = "[==== FIN Guardar Auditoria  LimitesGenerales - Controller ====]";
+	
+	private static final String DETALLE = "detalle";
+	
+	private static final String EDIT = "edit";
+	
+	private static final String GUARDAR = "guardar";
+	
+	private static final String SAVE = "save";
+	
+	private static final String ACTIVAR = "Activar";
+	
+	private static final String DESACTIVAR = "Desactivar";
+	
+	
 	@GetMapping("/index")
 	public String index(Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
 		LOGGER.info(LIMITESGENERALESCONTROLLERINDEXI);
@@ -155,7 +176,7 @@ public class LimitesGeneralesController {
 	@GetMapping("/activar/{codMoneda}/{tipoTransaccion}/{tipoCliente}")
 	public String activarWs(@PathVariable("codMoneda") String codMoneda, @PathVariable("tipoTransaccion") String tipoTransaccion,
 			@PathVariable("tipoCliente") String tipoCliente, LimitesGenerales limitesGenerales ,Model model, 
-			RedirectAttributes redirectAttributes, HttpSession httpSession) {
+			RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(LIMITESGENERALESCONTROLLERACTIVARI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -175,9 +196,11 @@ public class LimitesGeneralesController {
 			limiteRequest.setLimite(limitesGeneralesEdit);
 			String respuesta = limitesGeneralesServiceApirest.actualizar(limiteRequest);
 			LOGGER.info(respuesta);
+			guardarAuditoriaLimitesGenerales(ACTIVAR, true, "0000", limite, respuesta, request);
 			redirectAttributes.addFlashAttribute(MENSAJE, respuesta);
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaLimitesGenerales(ACTIVAR, false, "0001", limite, e.getMessage(), request);
 			redirectAttributes.addFlashAttribute(MENSAJEERROR, e.getMessage());
 		}
 		LOGGER.info(LIMITESGENERALESCONTROLLERACTIVARF);
@@ -187,7 +210,7 @@ public class LimitesGeneralesController {
 	@GetMapping("/desactivar/{codMoneda}/{tipoTransaccion}/{tipoCliente}")
 	public String desactivarWs(@PathVariable("codMoneda") String codMoneda, @PathVariable("tipoTransaccion") String tipoTransaccion,
 			@PathVariable("tipoCliente") String tipoCliente, LimitesGenerales limitesGenerales ,Model model,
-			RedirectAttributes redirectAttributes, HttpSession httpSession) {
+			RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(LIMITESGENERALESCONTROLLERDESACTIVARI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -207,9 +230,11 @@ public class LimitesGeneralesController {
 			limiteRequest.setLimite(limitesGeneralesEdit);
 			String respuesta = limitesGeneralesServiceApirest.actualizar(limiteRequest);
 			LOGGER.info(respuesta);
+			guardarAuditoriaLimitesGenerales(DESACTIVAR, true, "0000", limite, respuesta, request);
 			redirectAttributes.addFlashAttribute(MENSAJE, respuesta);
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaLimitesGenerales(DESACTIVAR, false, "0001", limite, e.getMessage(), request);
 			redirectAttributes.addFlashAttribute(MENSAJEERROR, e.getMessage());
 		}
 		LOGGER.info(LIMITESGENERALESCONTROLLERDESACTIVARF);
@@ -220,7 +245,7 @@ public class LimitesGeneralesController {
 	@GetMapping("/detalle")
 	public String detalleWs1(@RequestParam("codMoneda") String codMoneda, @RequestParam("tipoTransaccion") String tipoTransaccion,
 			@RequestParam("tipoCliente") String tipoCliente, LimitesGenerales limitesGenerales ,Model model, 
-			RedirectAttributes redirectAttributes, HttpSession httpSession) {
+			RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(LIMITESGENERALESCONTROLLERDETALLEI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -244,15 +269,20 @@ public class LimitesGeneralesController {
 				limitesGeneralesEdit.setMontoDiarioString(libreriaUtil.formatNumber(limitesGeneralesEdit.getMontoDiario()));
 				limitesGeneralesEdit.setMontoBancoString(libreriaUtil.formatNumber(limitesGeneralesEdit.getMontoBanco()));
 				
+				guardarAuditoriaLimitesGenerales(DETALLE, true, "0000", limite, "Operacion exitosa.", request);
+				
 				model.addAttribute(LIMITESGENERALES, limitesGeneralesEdit);
 				LOGGER.info(LIMITESGENERALESCONTROLLERDETALLEF);
             	return URLFORMLIMITESGENERALESDETALLE;
 			}else {
+				
+				guardarAuditoriaLimitesGenerales(DETALLE, true, "0000", limite, MENSAJENORESULTADO, request);
 				redirectAttributes.addFlashAttribute(MENSAJEERROR, MENSAJENORESULTADO);
 				return REDIRECTINDEX;
 			}
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaLimitesGenerales(DETALLE, false, "0001", limite, e.getMessage(), request);
 			redirectAttributes.addFlashAttribute(MENSAJEERROR, e.getMessage());
 			return REDIRECTINDEX;
 		}
@@ -266,7 +296,7 @@ public class LimitesGeneralesController {
 	@GetMapping("/edit/{codMoneda}/{tipoTransaccion}/{tipoCliente}")
 	public String editarWs(@PathVariable("codMoneda") String codMoneda, @PathVariable("tipoTransaccion") String tipoTransaccion,
 			@PathVariable("tipoCliente") String tipoCliente, LimitesGenerales limitesGenerales ,Model model,
-			RedirectAttributes redirectAttributes, HttpSession httpSession) {
+			RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(LIMITESGENERALESCONTROLLEREDITARI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -285,13 +315,16 @@ public class LimitesGeneralesController {
 			if(limitesGeneralesEdit != null) {
 				model.addAttribute(LIMITESGENERALES, limitesGeneralesEdit);
 				LOGGER.info(LIMITESGENERALESCONTROLLEREDITARF);
+				guardarAuditoriaLimitesGenerales(EDIT, true, "0000", limite, "Operacion exitosa.", request);
 				return URLFORMLIMITESGENERALESEDIT;
 			}else {
+				guardarAuditoriaLimitesGenerales(EDIT, true, "0000", limite, MENSAJENORESULTADO, request);
 				redirectAttributes.addFlashAttribute(MENSAJEERROR, MENSAJENORESULTADO);
 				return REDIRECTINDEX;
 			}
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaLimitesGenerales(EDIT, false, "0001", limite, e.getMessage(), request);
 			redirectAttributes.addFlashAttribute(MENSAJEERROR, e.getMessage());
 			return REDIRECTINDEX;
 		}
@@ -299,7 +332,7 @@ public class LimitesGeneralesController {
 	
 	@PostMapping("/guardar")
 	public String guardarWs(LimitesGenerales limitesGenerales, BindingResult result,
-			RedirectAttributes redirectAttributes, Model model, HttpSession httpSession) {
+			RedirectAttributes redirectAttributes, Model model, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(LIMITESGENERALESCONTROLLERGUARDARI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -343,11 +376,13 @@ public class LimitesGeneralesController {
 			
 			String respuesta = limitesGeneralesServiceApirest.actualizar(limiteRequest);
 			LOGGER.info(respuesta);
+			guardarAuditoriaLimitesGenerales(GUARDAR, true, "0000", limitesGenerales, respuesta, request);
 			redirectAttributes.addFlashAttribute(MENSAJE, respuesta);
 			LOGGER.info(LIMITESGENERALESCONTROLLERGUARDARF);
 			return REDIRECTINDEX;
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaLimitesGenerales(GUARDAR, false, "0001", limitesGenerales, e.getMessage(), request);
 			result.addError(new ObjectError(LISTAERROR, e.getMessage()));
 			listaError.add(e.getMessage());
 			model.addAttribute(LISTAERROR, listaError);
@@ -359,7 +394,8 @@ public class LimitesGeneralesController {
 	
 	
 	@GetMapping("/formLimitesGenerales")
-	public String formLimitesGenerales(LimitesGenerales limitesGenerales,  Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
+	public String formLimitesGenerales(LimitesGenerales limitesGenerales,  Model model, 
+			RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		
 		LOGGER.info(LIMITESGENERALESCONTROLLERFORMI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
@@ -375,18 +411,21 @@ public class LimitesGeneralesController {
 		
 		try {
 			listaMonedas = monedaServiceApiRest.listaMonedas(monedasRequest);
+			guardarAuditoria("formLimitesGenerales", true, "0000",  "Operacionexitosa. formLimitesGenerales", request);
 			model.addAttribute(LISTAMONEDAS, listaMonedas);
 			LOGGER.info(LIMITESGENERALESCONTROLLERFORMF);
     		return URLFORMLIMITESGENERALES;
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoria("formLimitesGenerales", false, "0001",  e.getMessage(), request);
 			redirectAttributes.addFlashAttribute(MENSAJEERROR, e.getMessage());
 			return REDIRECTINDEX;
 		}
 	}
 	
 	@PostMapping("/save")
-	public String saveWs(LimitesGenerales limitesGenerales, BindingResult result, Model model, RedirectAttributes redirectAttributes, HttpSession httpSession) {
+	public String saveWs(LimitesGenerales limitesGenerales, BindingResult result, 
+			Model model, RedirectAttributes redirectAttributes, HttpSession httpSession, HttpServletRequest request) {
 		LOGGER.info(LIMITESGENERALESCONTROLLERSAVEI);
 		if(!libreriaUtil.isPermisoMenu(httpSession, valorBD)) {
 			LOGGER.info(NOTIENEPERMISO);
@@ -447,11 +486,13 @@ public class LimitesGeneralesController {
 		
 			String respuesta = limitesGeneralesServiceApirest.crear(limiteRequest);
 			LOGGER.info(respuesta);
+			guardarAuditoriaLimitesGenerales(SAVE, true, "0000", limitesGenerales, respuesta, request);
 			redirectAttributes.addFlashAttribute(MENSAJE, respuesta);
 			LOGGER.info(LIMITESGENERALESCONTROLLERSAVEF);
 			return REDIRECTINDEX;
 		} catch (CustomException e) {
 			LOGGER.error(e.getMessage());
+			guardarAuditoriaLimitesGenerales(SAVE, false, "0001", limitesGenerales, e.getMessage(), request);
 			try {
 				listaMonedas = monedaServiceApiRest.listaMonedas(monedasRequest);
 				model.addAttribute(LISTAMONEDAS, listaMonedas);
@@ -548,6 +589,41 @@ public class LimitesGeneralesController {
 		model.addAttribute("arrUri", arrUriP);
 	}
 		
+	public void guardarAuditoria(String accion, boolean resultado, String codRespuesta,  String respuesta, HttpServletRequest request) {
+		try {
+			LOGGER.info(LIMITESGENERALESFUNCIONAUDITORIAI);
+			auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+					LIMITESGENERALES, accion, codRespuesta, resultado, respuesta, request.getRemoteAddr());
+			LOGGER.info(LIMITESGENERALESFUNCIONAUDITORIAF);
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+		}
+	}
+	
+	public void guardarAuditoriaLimitesGenerales(String accion, boolean resultado, String codRespuesta, LimitesGenerales limitesGenerales, String respuesta, HttpServletRequest request) {
+		try {
+			LOGGER.info(LIMITESGENERALESFUNCIONAUDITORIAI);
+			
+			if(accion.equals(DETALLE) || accion.equals(EDIT) || accion.equals(ACTIVAR) || accion.equals(DESACTIVAR)) {
+				auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+						LIMITESGENERALES, accion, codRespuesta, resultado, respuesta+" LimitesGenerales:[codMoneda="+limitesGenerales.getCodMoneda()+"], "
+								+ "[tipoTransaccion="+limitesGenerales.getTipoTransaccion()+"], [tipoCliente="+limitesGenerales.getTipoCliente()+"]", request.getRemoteAddr());
+			}else {
+				if(accion.equals(GUARDAR)||accion.equals(SAVE)) {
+					auditoriaService.save(SecurityContextHolder.getContext().getAuthentication().getName(),
+							LIMITESGENERALES, accion, codRespuesta, resultado, respuesta+" LimitesGenerales:[codMoneda="+limitesGenerales.getCodMoneda()+"], "
+							+ "[tipoTransaccion="+limitesGenerales.getTipoTransaccion()+"], [tipoCliente="+limitesGenerales.getTipoCliente()+"], "
+							+ "[montoMin="+limitesGenerales.getMontoMin()+"], [montoMax="+limitesGenerales.getMontoMax()+"], "
+							+ "[montoDiario="+limitesGenerales.getMontoDiario()+"], [montoMensual="+limitesGenerales.getMontoMensual()+"], "
+							+ "[montoBanco="+limitesGenerales.getMontoBanco()+"], [montoTope="+limitesGenerales.getMontoTope()+"]", request.getRemoteAddr());
+				}
+			}
+			
+			LOGGER.info(LIMITESGENERALESFUNCIONAUDITORIAF);
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+		}
+	}
 	
 	
 }
