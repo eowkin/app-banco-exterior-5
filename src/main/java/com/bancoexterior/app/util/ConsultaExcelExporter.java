@@ -15,14 +15,11 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
+
 
 import com.bancoexterior.app.convenio.model.Movimiento;
 
-import lombok.extern.slf4j.Slf4j;
 
-
-@Slf4j
 public class ConsultaExcelExporter {
 	
 	public static final char COMA                                 = ',';
@@ -70,8 +67,8 @@ public class ConsultaExcelExporter {
         createCell(row, 13, "Referencia Credito", style);
         createCell(row, 14, "Tipo Transaccion", style);
         createCell(row, 15, "Estatus", style);       
-        
-         
+        createCell(row, 16, "Fecha Liquidacion", style);
+        createCell(row, 17, "Tipo Pacto", style); 
     }
      
     private void createCell(Row row, int columnCount, Object value, CellStyle style) {
@@ -106,22 +103,11 @@ public class ConsultaExcelExporter {
             createCell(row, columnCount++, movimiento.getNroIdCliente(), style);
             createCell(row, columnCount++, movimiento.getCuentaDivisa(), style);
             createCell(row, columnCount++, movimiento.getCuentaNacional(), style);
-            log.info(formatNumber(movimiento.getMontoDivisa()));
             createCell(row, columnCount++, formatNumber(movimiento.getMontoDivisa()), style);
-            
-            log.info(formatNumber(movimiento.getMontoBsCliente()));
             createCell(row, columnCount++, formatNumber(movimiento.getMontoBsCliente()), style);
-            
-            log.info(formatNumber(movimiento.getTasaCliente())); 
-            createCell(row, columnCount++, formatNumber(movimiento.getTasaCliente()), style);
-            
-            log.info(formatNumber(movimiento.getTasaOperacion()));
+            createCell(row, columnCount++, formatNumber(movimiento.getTasaCliente()), style); 
             createCell(row, columnCount++, formatNumber(movimiento.getTasaOperacion()), style);
-            
-            log.info(formatNumber(movimiento.getMontoBsOperacion()));
             createCell(row, columnCount++, formatNumber(movimiento.getMontoBsOperacion()), style);
-            
-            
             createCell(row, columnCount++, movimiento.getReferenciaDebito(), style);
             createCell(row, columnCount++, movimiento.getReferenciaCredito(), style);
             if(movimiento.getTipoTransaccion().equals("C")) {
@@ -146,8 +132,8 @@ public class ConsultaExcelExporter {
                     }
                 }
             }
-            	
-            
+            createCell(row, columnCount++, movimiento.getFechaPacto(), style);	
+            createCell(row, columnCount++, movimiento.getTipoPacto(), style);
              
         }
     }
